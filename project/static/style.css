@@ -1,0 +1,20 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+
+body{
+    padding: auto;
+    margin: auto;
+}
+.header{
+    display: flex;
+    background-color: #162840;
+    width: max;
+    height: 80px;
+}
+.name{
+    display: flex;
+    align-items: center;
+    color: white;
+    font-size: 12px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    padding-left: 15px;
+}
