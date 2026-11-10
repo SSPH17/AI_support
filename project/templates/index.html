@@ -8,13 +8,43 @@
 </head>
 <body>
     <header class="header">
-        <div class="name">
-            <h1>TeamDocs AI</h1>
-        </div>
+        <h1 class="name">TeamDocs AI</h1>
     </header>
 
-    <div class="navigation">
-        
+    <div class="main-container">
+        <nav class="navigation">
+            <a href="{{ url_for('projects') }}" class="nav-item {{ 'active' if request.endpoint == 'projects' else '' }}">
+                Проекты
+            </a>
+            <a href="{{ url_for('chat') }}" class="nav-item {{ 'active' if request.endpoint == 'chat' else '' }}">
+                AI-чат
+            </a>
+            <a href="{{ url_for('history') }}" class="nav-item {{ 'active' if request.endpoint == 'history' else '' }}">
+                История
+            </a>
+            <a href="{{ url_for('settings') }}" class="nav-item {{ 'active' if request.endpoint == 'settings' else '' }}">
+                Настройки
+            </a>
+        </nav>
+        <main class="output-panel">
+            {% if request.endpoint == 'projects' %}
+                <h2>Мои проекты</h2>
+                <p>Здесь будет список проектов.</p>
+            {% elif request.endpoint == 'chat' %}
+                <h2>AI-Чат</h2>
+                <p>Окно диалога с нейросетью.</p>
+            {% elif request.endpoint == 'history' %}
+                <h2>История запросов</h2>
+                <p>Архив прошлых сессий.</p>
+            {% elif request.endpoint == 'settings' %}
+                <h2>Настройки</h2>
+                <p>Параметры аккаунта и модели.</p>
+            {% else %}
+                <div class="welcome-screen">
+                    <h1>Добро пожаловать</h1>
+                </div>
+            {% endif %}
+        </main>
     </div>
 </body>
 </html>

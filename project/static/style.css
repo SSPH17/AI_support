@@ -3,18 +3,71 @@
 body{
     padding: auto;
     margin: auto;
+    overflow: hidden;
 }
+a{
+    text-decoration: none;
+}
+
+.main-container{
+    display: flex;
+    height: calc(100vh - 80px);
+}
+
+/* Хеддер */
 .header{
     display: flex;
     background-color: #162840;
-    width: max;
+    width: 100%;
     height: 80px;
 }
 .name{
     display: flex;
     align-items: center;
     color: white;
-    font-size: 12px;
+    font-size: 24px;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     padding-left: 15px;
+}
+
+/* Навигация */
+.navigation{
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 15px 10px;
+    width: 180px;
+    height: 100%;
+    background-color: #F0F3FA;
+}
+.nav-item{
+    font-size: 18px;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    color: gray;
+    width: 100%;
+    padding: 10px 10px 10px 20px;
+    box-sizing: border-box;
+}
+.nav-item:hover,
+.nav-item.active{
+    background-color: #bdd9fc;
+    color: black;
+    border-radius: 15px;
+    transition: background-color 0.5s ease;
+}
+
+/* Панель выводов */
+.output-panel{
+    flex-grow: 1;
+    padding: 25px;
+}
+
+.welcome-screen{
+    display: flex;
+    justify-content: center;
+
+    height: 100%;
+    color: gray;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
 }
