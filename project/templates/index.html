@@ -8,7 +8,7 @@
 </head>
 <body>
     <header class="header">
-        <h1 class="name">TeamDocs AI</h1>
+        <h1><a href="{{ url_for('home') }}"  class="name {{ 'active' if request.endpoint == 'home' else '' }}">TeamDocs AI</a></h1>
     </header>
 
     <div class="main-container">
@@ -28,8 +28,186 @@
         </nav>
         <main class="output-panel">
             {% if request.endpoint == 'projects' %}
-                <h2>Мои проекты</h2>
-                <p>Здесь будет список проектов.</p>
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            {% for category, message in messages %}
+                                <div class="alert {{ 'alert-success' if category == 'success' else 'alert-error' }}">
+                                    {{ message }}
+                                </div>
+                            {% endfor %}
+                        {% endif %}
+                    {% endwith %}
+
+                    <!-- Диалог выбора при совпадении имени файла -->
+                    {% if conflict_data %}
+                        <div class="conflict-box">
+                            <div class="conflict-text">
+                                Файл <strong>«{{ conflict_data.filename }}»</strong> уже существует в этой папке. Что сделать с новым файлом?
+                            </div>
+                            <form action="{{ url_for('projects', folder=current_folder) }}" method="POST" class="conflict-actions">
+                                <input type="hidden" name="action" value="resolve_conflict">
+                                <input type="hidden" name="temp_id" value="{{ conflict_data.temp_id }}">
+                                <input type="hidden" name="filename" value="{{ conflict_data.filename }}">
+                                <button type="submit" name="choice" value="replace" class="btn-primary">Заменить существующий</button>
+                                <button type="submit" name="choice" value="keep_both" class="btn-secondary">Сохранить отдельно</button>
+                                <button type="submit" name="choice" value="cancel" class="btn-cancel">Отмена</button>
+                            </form>
+                        </div>
+                    {% endif %}
+
+                    <!-- Навигация по папкам -->
+                    <div class="drive-header">
+                        <div class="breadcrumbs">
+                            <a href="{{ url_for('projects') }}">Проекты</a>
+                            {% if current_folder %}
+                                <span>/ {{ current_folder }}</span>
+                            {% endif %}
+                        </div>
+                        {% if current_folder %}
+                            <a href="{{ url_for('projects', folder=parent_folder) }}" class="btn-back">← Назад</a>
+                        {% endif %}
+                    </div>
+
+                    <!-- Окно только просмотра содержимого файла -->
+                    {% if viewed_file %}
+                        <div class="viewer-box">
+                            <div class="viewer-header">
+                                <h3>📄 {{ viewed_file.name }}</h3>
+                                <a href="{{ url_for('projects', folder=current_folder) }}" class="btn-close">✕ Закрыть</a>
+                            </div>
+                            <pre class="file-content-view">{{ viewed_file.content }}</pre>
+                        </div>
+                    {% endif %}
+
+                    <!-- Панель создания папки и загрузки файла -->
+                    <div class="drive-actions">
+                        <form class="action-form" action="{{ url_for('projects', folder=current_folder) }}" method="POST">
+                            <input type="hidden" name="action" value="create_folder">
+                            <input type="text" name="folder_name" placeholder="Название папки" class="input-text" required>
+                            <button type="submit" class="btn-secondary">+ Папка</button>
+                        </form>
+
+                        <form class="action-form" action="{{ url_for('projects', folder=current_folder) }}" method="POST" enctype="multipart/form-data">
+                            <input type="hidden" name="action" value="upload_file">
+                            <input type="file" id="fileInput" name="file" accept=".md,.markdown,.txt" required>
+                            <button type="submit" class="btn-primary">Загрузить (.md, .txt)</button>
+                        </form>
+                    </div>
+
+                    <!-- Сетка папок -->
+                    {% if folders %}
+                        <h3 class="section-label">Папки</h3>
+                        <div class="folders-grid">
+                            {% for folder in folders %}
+                                <div class="folder-card-wrapper">
+                                    <a href="{{ url_for('projects', folder=folder.path) }}" class="folder-link">
+                                        <span class="folder-icon">📁</span>
+                                        <span class="folder-name">{{ folder.name }}</span>
+                                    </a>
+                                    <form action="{{ url_for('projects', folder=current_folder) }}" method="POST" class="inline-form delete-folder-form"
+                                            data-folder-name="{{ folder.name }}"
+                                            data-is-empty="{{ '1' if folder.is_empty else '0' }}">
+                                        <input type="hidden" name="action" value="delete_folder">
+                                        <input type="hidden" name="folder_name" value="{{ folder.name }}">
+                                        <button type="submit" class="btn-folder-delete" title="Удалить папку">✕</button>
+                                    </form>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Таблица файлов -->
+                    <h3 class="section-label">Файлы</h3>
+                    <div class="files-table-wrapper">
+                        {% if files %}
+                            <table class="drive-table">
+                                <thead>
+                                    <tr>
+                                        <th>Название</th>
+                                        <th>Размер</th>
+                                        <th>Дата загрузки</th>
+                                        <th>Статус обработки</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for file in files %}
+                                        <tr>
+                                            <td class="file-name-cell">
+                                                <a href="{{ url_for('projects', folder=current_folder, view=file.name) }}" class="file-link">
+                                                    📄 {{ file.name }}
+                                                </a>
+                                            </td>
+                                            <td>{{ file.size }}</td>
+                                            <td>{{ file.date }}</td>
+                                            <td>
+                                                <span class="status-badge status-{{ file.status_index }}">
+                                                    {{ file.status }}
+                                                </span>
+                                            </td>
+                                            <td class="actions-cell">
+                                                <a href="{{ url_for('projects', folder=current_folder, view=file.name) }}" class="btn-action-view">
+                                                    Просмотр
+                                                </a>
+                                                <form action="{{ url_for('projects', folder=current_folder) }}" method="POST" class="inline-form" onsubmit="return confirm('Удалить файл «{{ file.name }}»?');">
+                                                    <input type="hidden" name="action" value="delete_file">
+                                                    <input type="hidden" name="filename" value="{{ file.name }}">
+                                                    <button type="submit" class="btn-action-delete">Удалить</button>
+                                                </form>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <p class="empty-msg">В этой папке пока нет файлов (.md, .markdown, .txt).</p>
+                        {% endif %}
+                    </div>
+
+                    <script>
+                        document.getElementById('fileInput').addEventListener('change', function() {
+                            const file = this.files[0];
+                            if (!file) return;
+
+                            const maxBytes = 512 * 1024 * 1024;
+                            const allowedExts = ['.md', '.markdown', '.txt'];
+                            const fileName = file.name.toLowerCase();
+                            const isValidExt = allowedExts.some(ext => fileName.endsWith(ext));
+
+                            if (!isValidExt) {
+                                alert('Неподдерживаемый формат! Выберите файл .md, .markdown или .txt.');
+                                this.value = '';
+                                return;
+                            }
+
+                            if (file.size > maxBytes) {
+                                alert('Файл слишком большой! Максимально допустимый размер — 0.5 ГБ (512 МБ).');
+                                this.value = '';
+                            }
+                        });
+
+                        // Автообновление страницы, пока есть файлы в процессе обработки
+                        const hasActiveTasks = document.querySelector('.status-0, .status-1');
+                        if (hasActiveTasks && !document.querySelector('.conflict-box')) {
+                            setTimeout(() => {
+                                window.location.reload();
+                            }, 3000);
+                        }
+                        document.querySelectorAll('.delete-folder-form').forEach(form => {
+                            form.addEventListener('submit', function(e) {
+                                const name = this.dataset.folderName;
+                                const isEmpty = this.dataset.isEmpty === '1';
+                                const message = isEmpty
+                                    ? `Удалить пустую папку «${name}»?`
+                                    : `ВНИМАНИЕ: Папка «${name}» не пуста! Удалить её вместе со всеми вложенными файлами и папками?`;
+
+                                if (!confirm(message)) {
+                                    e.preventDefault();
+                                }
+                            });
+                        });
+                    </script>
+
             {% elif request.endpoint == 'chat' %}
                 <h2>AI-Чат</h2>
                 <p>Окно диалога с нейросетью.</p>
