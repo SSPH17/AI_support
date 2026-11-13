@@ -4,6 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TeamDocs_AI</title>
+    <script>
+      try {
+            const t = localStorage.getItem('theme');
+            if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            }
+        } catch (e) {}
+    </script>
     <link rel="stylesheet" href="../static/style.css">
 </head>
 <body>
@@ -216,6 +224,10 @@
                 <p>Архив прошлых сессий.</p>
             {% elif request.endpoint == 'settings' %}
                 <h2>Настройки</h2>
+                <label class="switch">
+                    <input type="checkbox" class="theme-input">
+                    <span class="slider"></span>
+                </label>
                 <p>Параметры аккаунта и модели.</p>
             {% else %}
                 <div class="welcome-screen">
@@ -224,5 +236,15 @@
             {% endif %}
         </main>
     </div>
+    <script>
+        const themeInput = document.querySelector('.theme-input');
+        if (themeInput) {
+            themeInput.checked = document.documentElement.classList.contains('dark');
+            themeInput.addEventListener('change', () => {
+                document.documentElement.classList.toggle('dark', themeInput.checked);
+                localStorage.setItem('theme', themeInput.checked ? 'dark' : 'light');
+            });
+        }
+    </script>
 </body>
 </html>
