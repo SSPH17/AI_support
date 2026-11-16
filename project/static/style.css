@@ -585,3 +585,205 @@ h1, h2, h3, p{
 .switch input:checked + .slider::before {
   transform: translateX(20px);
 }
+
+/* --- ЧАТ С ИИ --- */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 140px); /* Высота с учетом хедера и панели */
+    background-color: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.chat-header {
+    padding: 15px 20px;
+    background-color: var(--bg-card);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.chat-header h2 {
+    margin: 0;
+    font-size: 18px;
+    color: var(--text-dark);
+}
+
+.chat-messages {
+    flex-grow: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.message {
+    display: flex;
+    width: 100%;
+}
+
+.user-message {
+    justify-content: flex-end;
+}
+
+.assistant-message {
+    justify-content: flex-start;
+}
+
+.message-content {
+    max-width: 75%;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 15px;
+    line-height: 1.5;
+    font-family: system-ui, -apple-system, sans-serif;
+    white-space: pre-wrap; /* Сохраняет переносы строк */
+}
+
+.user-message .message-content {
+    background-color: var(--btn-primary);
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.assistant-message .message-content {
+    background-color: var(--bg-card);
+    color: var(--text-main);
+    border: 1px solid var(--border-color);
+    border-bottom-left-radius: 4px;
+}
+
+.chat-input-area {
+    display: flex;
+    gap: 10px;
+    padding: 15px 20px;
+    background-color: var(--bg-card);
+    border-top: 1px solid var(--border-color);
+    align-items: flex-end;
+}
+
+#chatInput {
+    flex-grow: 1;
+    resize: none;
+    border: 1px solid var(--border-light);
+    border-radius: 10px;
+    padding: 12px 15px;
+    font-size: 15px;
+    font-family: inherit;
+    background-color: var(--bg-body);
+    color: var(--text-main);
+    outline: none;
+    max-height: 120px;
+    min-height: 24px;
+    overflow-y: auto;
+    transition: border-color 0.2s;
+}
+
+#chatInput:focus {
+    border-color: var(--btn-primary);
+}
+
+#sendBtn {
+    height: 46px;
+    padding: 0 20px;
+    border-radius: 10px;
+    font-weight: 600;
+}
+
+#sendBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* --- НАСТРОЙКИ --- */
+.settings-container {
+    max-width: 700px;
+    background-color: var(--bg-panel);
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+}
+.settings-section {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+.settings-section:last-child {
+    border-bottom: none;
+}
+.settings-section h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: var(--text-dark);
+}
+.radio-group {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+.radio-card {
+    flex: 1;
+    min-width: 250px;
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background-color: var(--bg-card);
+}
+.radio-card:hover {
+    border-color: var(--border-light);
+}
+.radio-card.selected {
+    border-color: var(--btn-primary);
+    background-color: var(--accent-bg);
+}
+.radio-card input[type="radio"] {
+    margin-bottom: 10px;
+    transform: scale(1.2);
+}
+.radio-title {
+    font-weight: bold;
+    font-size: 16px;
+    color: var(--text-dark);
+    margin-bottom: 5px;
+}
+.radio-desc {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+/* --- RAG В ЧАТЕ --- */
+.chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.rag-selector {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+}
+
+.rag-selector label {
+    color: var(--text-muted);
+}
+
+.rag-selector select {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-light);
+    background-color: var(--bg-body);
+    color: var(--text-main);
+    outline: none;
+    font-size: 14px;
+    cursor: pointer;
+}

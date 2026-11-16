@@ -21,21 +21,13 @@
 
     <div class="main-container">
         <nav class="navigation">
-            <a href="{{ url_for('projects') }}" class="nav-item {{ 'active' if request.endpoint == 'projects' else '' }}">
-                Проекты
-            </a>
-            <a href="{{ url_for('chat') }}" class="nav-item {{ 'active' if request.endpoint == 'chat' else '' }}">
-                AI-чат
-            </a>
-            <a href="{{ url_for('history') }}" class="nav-item {{ 'active' if request.endpoint == 'history' else '' }}">
-                История
-            </a>
-            <a href="{{ url_for('settings') }}" class="nav-item {{ 'active' if request.endpoint == 'settings' else '' }}">
-                Настройки
-            </a>
+            <a href="{{ url_for('projects.projects') }}" class="nav-item {{ 'active' if request.endpoint == 'projects.projects' else '' }}">Проекты</a>
+            <a href="{{ url_for('ai_chat.chat') }}" class="nav-item {{ 'active' if request.endpoint == 'ai_chat.chat' else '' }}">AI-чат</a>
+            <a href="{{ url_for('history.history') }}" class="nav-item {{ 'active' if request.endpoint == 'history.history' else '' }}">История</a>
+            <a href="{{ url_for('settings.settings') }}" class="nav-item {{ 'active' if request.endpoint == 'settings.settings' else '' }}">Настройки</a>
         </nav>
         <main class="output-panel">
-            {% if request.endpoint == 'projects' %}
+            {% if request.endpoint == 'projects.projects' %}
                 {% with messages = get_flashed_messages(with_categories=true) %}
                         {% if messages %}
                             {% for category, message in messages %}
@@ -52,7 +44,7 @@
                             <div class="conflict-text">
                                 Файл <strong>«{{ conflict_data.filename }}»</strong> уже существует в этой папке. Что сделать с новым файлом?
                             </div>
-                            <form action="{{ url_for('projects', folder=current_folder) }}" method="POST" class="conflict-actions">
+                            <form action="{{ url_for('projects.projects', folder=current_folder) }}" method="POST" class="conflict-actions">
                                 <input type="hidden" name="action" value="resolve_conflict">
                                 <input type="hidden" name="temp_id" value="{{ conflict_data.temp_id }}">
                                 <input type="hidden" name="filename" value="{{ conflict_data.filename }}">
@@ -66,13 +58,13 @@
                     <!-- Навигация по папкам -->
                     <div class="drive-header">
                         <div class="breadcrumbs">
-                            <a href="{{ url_for('projects') }}">Проекты</a>
+                            <a href="{{ url_for('projects.projects') }}">Проекты</a>
                             {% if current_folder %}
                                 <span>/ {{ current_folder }}</span>
                             {% endif %}
                         </div>
                         {% if current_folder %}
-                            <a href="{{ url_for('projects', folder=parent_folder) }}" class="btn-back">← Назад</a>
+                            <a href="{{ url_for('projects.projects', folder=parent_folder) }}" class="btn-back">← Назад</a>
                         {% endif %}
                     </div>
 
@@ -81,7 +73,7 @@
                         <div class="viewer-box">
                             <div class="viewer-header">
                                 <h3>📄 {{ viewed_file.name }}</h3>
-                                <a href="{{ url_for('projects', folder=current_folder) }}" class="btn-close">✕ Закрыть</a>
+                                <a href="{{ url_for('projects.projects', folder=current_folder) }}" class="btn-close">✕ Закрыть</a>
                             </div>
                             <pre class="file-content-view">{{ viewed_file.content }}</pre>
                         </div>
@@ -89,16 +81,20 @@
 
                     <!-- Панель создания папки и загрузки файла -->
                     <div class="drive-actions">
-                        <form class="action-form" action="{{ url_for('projects', folder=current_folder) }}" method="POST">
+                        <form class="action-form" action="{{ url_for('projects.projects', folder=current_folder) }}" method="POST">
                             <input type="hidden" name="action" value="create_folder">
                             <input type="text" name="folder_name" placeholder="Название папки" class="input-text" required>
                             <button type="submit" class="btn-secondary">+ Папка</button>
                         </form>
 
-                        <form class="action-form" action="{{ url_for('projects', folder=current_folder) }}" method="POST" enctype="multipart/form-data">
+                        <form class="action-form" action="{{ url_for('projects.projects', folder=current_folder) }}" method="POST" enctype="multipart/form-data" id="uploadForm">
                             <input type="hidden" name="action" value="upload_file">
-                            <input type="file" id="fileInput" name="file" accept=".md,.markdown,.txt" required>
-                            <button type="submit" class="btn-primary">Загрузить (.md, .txt)</button>
+                            
+                            <input type="file" id="fileInput" name="files" accept=".md,.markdown,.txt" multiple style="display:none;">
+                            <button type="button" class="btn-secondary" onclick="document.getElementById('fileInput').click();">Выбрать файлы</button>
+                            
+                            <input type="file" id="folderInput" name="files" webkitdirectory directory multiple style="display:none;">
+                            <button type="button" class="btn-secondary" onclick="document.getElementById('folderInput').click();">Загрузить папку</button>
                         </form>
                     </div>
 
@@ -108,11 +104,11 @@
                         <div class="folders-grid">
                             {% for folder in folders %}
                                 <div class="folder-card-wrapper">
-                                    <a href="{{ url_for('projects', folder=folder.path) }}" class="folder-link">
+                                    <a href="{{ url_for('projects.projects', folder=folder.path) }}" class="folder-link">
                                         <span class="folder-icon">📁</span>
                                         <span class="folder-name">{{ folder.name }}</span>
                                     </a>
-                                    <form action="{{ url_for('projects', folder=current_folder) }}" method="POST" class="inline-form delete-folder-form"
+                                    <form action="{{ url_for('projects.projects', folder=current_folder) }}" method="POST" class="inline-form delete-folder-form"
                                             data-folder-name="{{ folder.name }}"
                                             data-is-empty="{{ '1' if folder.is_empty else '0' }}">
                                         <input type="hidden" name="action" value="delete_folder">
@@ -142,7 +138,7 @@
                                     {% for file in files %}
                                         <tr>
                                             <td class="file-name-cell">
-                                                <a href="{{ url_for('projects', folder=current_folder, view=file.name) }}" class="file-link">
+                                                <a href="{{ url_for('projects.projects', folder=file.folder, view=file.name) }}" class="file-link">
                                                     📄 {{ file.name }}
                                                 </a>
                                             </td>
@@ -154,10 +150,10 @@
                                                 </span>
                                             </td>
                                             <td class="actions-cell">
-                                                <a href="{{ url_for('projects', folder=current_folder, view=file.name) }}" class="btn-action-view">
+                                                <a href="{{ url_for('projects.projects', folder=file.folder, view=file.name) }}" class="btn-action-view">
                                                     Просмотр
                                                 </a>
-                                                <form action="{{ url_for('projects', folder=current_folder) }}" method="POST" class="inline-form" onsubmit="return confirm('Удалить файл «{{ file.name }}»?');">
+                                                <form action="{{ url_for('projects.projects', folder=file.folder) }}" method="POST" class="inline-form" onsubmit="return confirm('Удалить файл «{{ file.name }}»?');">
                                                     <input type="hidden" name="action" value="delete_file">
                                                     <input type="hidden" name="filename" value="{{ file.name }}">
                                                     <button type="submit" class="btn-action-delete">Удалить</button>
@@ -168,39 +164,80 @@
                                 </tbody>
                             </table>
                         {% else %}
-                            <p class="empty-msg">В этой папке пока нет файлов (.md, .markdown, .txt).</p>
+                            <p class="empty-msg">Тут пока нет файлов (.md, .markdown, .txt).</p>
                         {% endif %}
                     </div>
 
                     <script>
-                        document.getElementById('fileInput').addEventListener('change', function() {
-                            const file = this.files[0];
-                            if (!file) return;
+                        const fileInput = document.getElementById('fileInput');
+                        const folderInput = document.getElementById('folderInput');
+                        const uploadForm = document.getElementById('uploadForm');
+                        const submitBtn = document.getElementById('submitBtn');
+                        
+                        // Скрываем кнопку "Загрузить", так как она больше не нужна
+                        if (submitBtn) {
+                            submitBtn.style.display = 'none';
+                        }
 
-                            const maxBytes = 512 * 1024 * 1024;
-                            const allowedExts = ['.md', '.markdown', '.txt'];
-                            const fileName = file.name.toLowerCase();
-                            const isValidExt = allowedExts.some(ext => fileName.endsWith(ext));
+                        const maxBytes = 512 * 1024 * 1024;
 
-                            if (!isValidExt) {
-                                alert('Неподдерживаемый формат! Выберите файл .md, .markdown или .txt.');
-                                this.value = '';
-                                return;
+                        function validateFiles(files) {
+                            if (!files || files.length === 0) return false;
+                            let totalSize = 0;
+                            
+                            for (let i = 0; i < files.length; i++) {
+                                const file = files[i];
+                                totalSize += file.size;
+                                
+                                const fileName = file.name.toLowerCase();
+                                const isValidExt = fileName.endsWith('.md') || fileName.endsWith('.markdown') || fileName.endsWith('.txt');
+                                
+                                // Игнорируем системные файлы (например, .DS_Store)
+                                if (!isValidExt && !fileName.startsWith('.')) {
+                                    alert(`Неподдерживаемый формат файла: ${file.name}. Разрешены только .md, .markdown и .txt.`);
+                                    return false;
+                                }
                             }
-
-                            if (file.size > maxBytes) {
-                                alert('Файл слишком большой! Максимально допустимый размер — 0.5 ГБ (512 МБ).');
-                                this.value = '';
+                            
+                            if (totalSize > maxBytes) {
+                                alert('Общий размер слишком велик! Максимально допустимый размер — 512 МБ.');
+                                return false;
                             }
-                        });
+                            return true;
+                        }
 
-                        // Автообновление страницы, пока есть файлы в процессе обработки
+                        // Обработчик для обычных файлов
+                        if (fileInput) {
+                            fileInput.addEventListener('change', function() {
+                                if (validateFiles(this.files)) {
+                                    uploadForm.submit(); // АВТОМАТИЧЕСКАЯ ОТПРАВКА
+                                } else {
+                                    this.value = ''; 
+                                }
+                            });
+                        }
+
+                        // Обработчик для папок
+                        if (folderInput) {
+                            folderInput.addEventListener('change', function() {
+                                if (validateFiles(this.files)) {
+                                    uploadForm.submit(); // АВТОМАТИЧЕСКАЯ ОТПРАВКА
+                                } else {
+                                    this.value = ''; 
+                                }
+                            });
+                        }
+
+                        // Автообновление страницы
                         const hasActiveTasks = document.querySelector('.status-0, .status-1');
-                        if (hasActiveTasks && !document.querySelector('.conflict-box')) {
+                        const isViewingFile = document.querySelector('.viewer-box');
+                        if (hasActiveTasks && !document.querySelector('.conflict-box') && !isViewingFile) {
                             setTimeout(() => {
                                 window.location.reload();
                             }, 3000);
                         }
+                        
+                        // Подтверждение удаления папок
                         document.querySelectorAll('.delete-folder-form').forEach(form => {
                             form.addEventListener('submit', function(e) {
                                 const name = this.dataset.folderName;
@@ -216,19 +253,226 @@
                         });
                     </script>
 
-            {% elif request.endpoint == 'chat' %}
-                <h2>AI-Чат</h2>
-                <p>Окно диалога с нейросетью.</p>
-            {% elif request.endpoint == 'history' %}
-                <h2>История запросов</h2>
-                <p>Архив прошлых сессий.</p>
-            {% elif request.endpoint == 'settings' %}
-                <h2>Настройки</h2>
-                <label class="switch">
-                    <input type="checkbox" class="theme-input">
-                    <span class="slider"></span>
-                </label>
-                <p>Параметры аккаунта и модели.</p>
+            {% elif request.endpoint == 'ai_chat.chat' %}
+                <div class="chat-container">
+                    <div class="chat-header">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <h2>AI-Чат <span style="font-size: 14px; font-weight: normal; color: var(--text-muted);">(Модель: {{ current_model | default('GigaChat', true) | title }})</span></h2>
+                            <button id="newChatBtn" class="btn-secondary" style="font-size: 12px; padding: 5px 10px;">+ Новый чат</button>
+                        </div>
+                        
+                        <div class="rag-selector">
+                            <label for="folderSelect">Искать в проекте:</label>
+                            <select id="folderSelect">
+                                <option value="">Без контекста (общий вопрос)</option>
+                                {% for folder in project_folders %}
+                                    <option value="{{ folder }}">{{ folder }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="chat-messages" id="chatMessages">
+                        {% if loaded_chat_messages %}
+                            <!-- Если загружаем историю, выводим сообщения из неё -->
+                            {% for msg in loaded_chat_messages %}
+                                <div class="message {{ 'user-message' if msg.role == 'user' else 'assistant-message' }}">
+                                    <div class="message-content">{{ msg.content }}</div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <!-- Если чат новый, выводим приветствие -->
+                            <div class="message assistant-message">
+                                <div class="message-content">Привет! Я ИИ-ассистент. Выберите папку проекта, и я смогу отвечать на вопросы по документам внутри неё.</div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="chat-input-area">
+                        <textarea id="chatInput" placeholder="Введите ваш вопрос..." rows="1"></textarea>
+                        <button id="sendBtn" class="btn-primary">Отправить</button>
+                    </div>
+                </div>
+
+                <script>
+
+                    const chatInput = document.getElementById('chatInput');
+                    const sendBtn = document.getElementById('sendBtn');
+                    const chatMessages = document.getElementById('chatMessages');
+                    const folderSelect = document.getElementById('folderSelect');
+                    
+                    let chatHistory = [];
+                    let currentChatId = null;
+
+                    // Проверяем, передал ли Flask историю
+                    try {
+                        const loadedMessages = '{{ loaded_chat_messages | tojson | safe if loaded_chat_messages else "[]" }}';
+                        chatHistory = JSON.parse(loadedMessages);
+                        
+                        const loadedId = '{{ loaded_chat_id if loaded_chat_id else "" }}';
+                        currentChatId = loadedId ? loadedId : null;
+                    } catch (e) {
+                        console.error("Ошибка загрузки истории чата", e);
+                    }
+
+                    function addMessage(text, role) {
+                        const msgDiv = document.createElement('div');
+                        msgDiv.className = `message ${role === 'user' ? 'user-message' : 'assistant-message'}`;
+                        const contentDiv = document.createElement('div');
+                        contentDiv.className = 'message-content';
+                        contentDiv.textContent = text;
+                        msgDiv.appendChild(contentDiv);
+                        chatMessages.appendChild(msgDiv);
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    }
+
+                    async function sendMessage() {
+                        const text = chatInput.value.trim();
+                        if (!text) return;
+
+                        chatInput.value = '';
+                        chatInput.disabled = true;
+                        sendBtn.disabled = true;
+                        
+                        addMessage(text, 'user');
+                        chatHistory.push({ role: 'user', content: text });
+
+                        const loadingDiv = document.createElement('div');
+                        loadingDiv.className = 'message assistant-message';
+                        loadingDiv.innerHTML = '<div class="message-content">Печатает...</div>';
+                        chatMessages.appendChild(loadingDiv);
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+
+                        try {
+                            const response = await fetch('/AI-Chat', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ 
+                                    message: text,
+                                    history: chatHistory.slice(-10),
+                                    folder: folderSelect.value // Передаем выбранную папку
+                                })
+                            });
+
+                            const data = await response.json();
+                            loadingDiv.remove();
+
+                             if (data.response) {
+                                addMessage(data.response, 'assistant');
+                                chatHistory.push({ role: 'assistant', content: data.response });
+                                
+                                // --- СОХРАНЕНИЕ ЧАТА НА СЕРВЕРЕ ---
+                                fetch('/api/save_chat', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ id: currentChatId, messages: chatHistory })
+                                }).then(res => res.json()).then(resData => {
+                                    if (resData.id) currentChatId = resData.id;
+                                });
+                                // ----------------------------------
+                                
+                            } else {
+                                addMessage('Ошибка: ' + (data.error || 'Неизвестная ошибка'), 'assistant');
+                            }
+                        } catch (error) {
+                            loadingDiv.remove();
+                            addMessage('Ошибка сети. Проверьте подключение.', 'assistant');
+                        } finally {
+                            chatInput.disabled = false;
+                            sendBtn.disabled = false;
+                            chatInput.focus();
+                        }
+                    }
+
+                    sendBtn.addEventListener('click', sendMessage);
+                    chatInput.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            sendMessage();
+                        }
+                    });
+                    chatInput.addEventListener('input', function() {
+                        this.style.height = 'auto';
+                        this.style.height = (this.scrollHeight) + 'px';
+                    });
+
+                    // --- ОБРАБОТЧИК КНОПКИ "НОВЫЙ ЧАТ" ---
+                    const newChatBtn = document.getElementById('newChatBtn');
+                    if (newChatBtn) {
+                        newChatBtn.addEventListener('click', () => {
+                            chatHistory = [];
+                            currentChatId = null;
+                            chatMessages.innerHTML = `
+                                <div class="message assistant-message">
+                                    <div class="message-content">Привет! Я ИИ-ассистент. Выберите папку проекта, и я смогу отвечать на вопросы по документам внутри неё.</div>
+                                </div>
+                            `;
+                        });
+                    }
+                </script>
+            {% elif request.endpoint == 'history.history' %}
+                <div class="history-container">
+                    <h2>История запросов</h2>
+                    <div class="history-list">
+                        {% if chat_history %}
+                            {% for chat in chat_history %}
+                                <div class="history-item" style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border: 1px solid var(--border-color); border-radius: 10px; margin-bottom: 10px; background-color: var(--bg-card);">
+                                    <div class="history-info">
+                                        <h4 style="margin: 0 0 5px 0; color: var(--text-dark);">{{ chat.title }}</h4>
+                                        <span class="history-date" style="font-size: 12px; color: var(--text-muted);">{{ chat.date }}</span>
+                                    </div>
+                                    <button class="btn-primary" onclick="loadChat('{{ chat.id }}')">Открыть</button>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="empty-msg">Вы пока не задавали вопросов.</p>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <script>
+                    function loadChat(chatId) {
+                        // Перенаправляем пользователя в чат с загрузкой истории
+                        window.location.href = `/AI-Chat?load=${chatId}`;
+                    }
+                </script>
+            {% elif request.endpoint == 'settings.settings' %}
+                <div class="settings-container">
+                    <h2>Настройки</h2>
+                    
+                    <div class="settings-section">
+                        <h3>Тема оформления</h3>
+                        <label class="switch">
+                            <input type="checkbox" class="theme-input">
+                            <span class="slider"></span>
+                        </label>
+                        <span style="margin-left: 10px; vertical-align: super;">Темная тема</span>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>Выбор нейросети (AI-чат)</h3>
+                        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 15px;">
+                            Выберите, какая модель будет отвечать вам во вкладке AI-чат.
+                        </p>
+                        
+                        <form method="POST" action="{{ url_for('settings.settings') }}">
+                            <div class="radio-group">
+                                <label class="radio-card {{ 'selected' if current_model == 'gigachat' else '' }}">
+                                    <input type="radio" name="ai_model" value="gigachat" {{ 'checked' if current_model == 'gigachat' else '' }}>
+                                    <span class="radio-title">GigaChat (Сбер)</span>
+                                    <span class="radio-desc">Российская модель, отлично работает с русским языком.</span>
+                                </label>
+                                
+                                <label class="radio-card {{ 'selected' if current_model == 'deepseek' else '' }}">
+                                    <input type="radio" name="ai_model" value="deepseek" {{ 'checked' if current_model == 'deepseek' else '' }}>
+                                    <span class="radio-title">DeepSeek</span>
+                                    <span class="radio-desc">Мощная модель для программирования и сложных задач.</span>
+                                </label>
+                            </div>
+                            <button type="submit" class="btn-primary" style="margin-top: 20px;">Сохранить настройки</button>
+                        </form>
+                    </div>
+                </div>
             {% else %}
                 <div class="welcome-screen">
                     <h1>Добро пожаловать</h1>
@@ -245,6 +489,24 @@
                 localStorage.setItem('theme', themeInput.checked ? 'dark' : 'light');
             });
         }
+
+        // --- АВТОСКРЫТИЕ УВЕДОМЛЕНИЙ ЧЕРЕЗ 5 СЕКУНД ---
+        document.addEventListener("DOMContentLoaded", () => {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(alert => {
+                setTimeout(() => {
+                    // Плавно уменьшаем прозрачность
+                    alert.style.transition = "opacity 0.5s ease, margin 0.5s ease, padding 0.5s ease";
+                    alert.style.opacity = "0";
+                    alert.style.marginBottom = "0";
+                    alert.style.paddingTop = "0";
+                    alert.style.paddingBottom = "0";
+                    
+                    // Полностью удаляем элемент из DOM после завершения анимации
+                    setTimeout(() => alert.remove(), 500);
+                }, 5000); // 5000 миллисекунд = 5 секунд
+            });
+        });
     </script>
 </body>
 </html>
