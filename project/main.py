@@ -4,7 +4,7 @@ import io
 from flask import Flask, render_template
 from projects import projects_bp
 from AI_chat import ai_chat_bp
-from history import history_bp
+from history import history_bp, cleanup_old_chats
 from settings import settings_bp
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
@@ -17,6 +17,10 @@ app.config['MAX_CONTENT_LENGTH'] = 512 * 1024 * 1024
 # Создаем папки при запуске
 os.makedirs('uploads', exist_ok=True)
 os.makedirs('.temp_uploads', exist_ok=True)
+os.makedirs('chat_history', exist_ok=True) # На всякий случай создаем и эту
+
+# А вот теперь очищаем старые чаты (когда папки точно есть)
+cleanup_old_chats(days=20)
 
 # Регистрируем блюпринты
 app.register_blueprint(projects_bp)
