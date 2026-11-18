@@ -25,9 +25,11 @@ def settings():
             config = get_config()
             config["ai_model"] = new_model
             save_config(config)
-            flash(f"Модель ИИ успешно изменена.", "success")
-        return redirect(url_for("settings.settings"))
+            
+            # Возвращаем JSON, так как запрос идет из JS
+            return jsonify({"status": "ok", "model": new_model})
+            
+        return jsonify({"error": "Неверная модель"}), 400
 
-    # Передаем текущую модель в шаблон
     config = get_config()
     return render_template("index.html", title="Настройки", current_model=config.get("ai_model", "gigachat"))

@@ -12,6 +12,34 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 UPLOAD_FOLDER = 'uploads'
 TEMP_FOLDER = '.temp_uploads'
 STATUS_FILE = 'statuses.json'
+DESCRIPTIONS_FILE = 'project_descriptions.json'
+
+def get_descriptions():
+    if os.path.exists(DESCRIPTIONS_FILE):
+        with open(DESCRIPTIONS_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return {}
+
+def save_description(rel_path, description):
+    descriptions = get_descriptions()
+    if description.strip():
+        descriptions[rel_path] = description.strip()
+    else:
+        # Если описание пустое, удаляем запись
+        descriptions.pop(rel_path, None)
+        
+    with open(DESCRIPTIONS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(descriptions, f, ensure_ascii=False, indent=2)
+
+def delete_folder_description(folder_rel_path):
+    prefix = folder_rel_path.rstrip("/") + "/"
+    descriptions = get_descriptions()
+    updated = {k: v for k, v in descriptions.items() if k != folder_rel_path and not k.startswith(prefix)}
+    
+    if len(updated) != len(descriptions):
+        with open(DESCRIPTIONS_FILE, 'w', encoding='utf-8') as f:
+            json.dump(updated, f, ensure_ascii=False, indent=2)
+
 ALLOWED_EXTENSIONS = {'.md', '.markdown', '.txt'}
 VALID_STATUSES = [
     "Ожидает обработки",
@@ -223,7 +251,12 @@ def projects():
                 else:
                     os.remove(temp_path)
                     flash("Загрузка отменена.", "error")
-
+        elif action == "edit_description":
+            folder_name = request.form.get("folder_name", "")
+            new_description = request.form.get("description", "")
+            if folder_name and is_safe_subpath(folder_name):
+                save_description(folder_name, new_description)
+                flash("Описание проекта обновлено.", "success")
         elif action == "delete_file":
             filename = os.path.basename(request.form.get("filename", ""))
             file_path = os.path.join(target_dir, filename)
@@ -240,29 +273,55 @@ def projects():
             if folder_name and is_safe_subpath(folder_subpath) and os.path.isdir(folder_path):
                 shutil.rmtree(folder_path)
                 delete_folder_statuses(folder_subpath.replace("\\", "/"))
+                delete_folder_description(folder_subpath)
                 flash(f"Папка «{folder_name}» удалена.", "success")
+
+        elif action == "rename_folder":
+            old_name = os.path.basename(request.form.get("old_name", ""))
+            new_name = safe_filename(request.form.get("new_name", "").strip())
+            
+            if old_name and new_name and new_name not in (".", ".."):
+                old_path = os.path.join(target_dir, old_name)
+                new_path = os.path.join(target_dir, new_name)
+                
+                if os.path.isdir(old_path) and not os.path.exists(new_path):
+                    os.rename(old_path, new_path)
+                    old_rel = os.path.join(current_folder, old_name).replace("\\", "/")
+                    new_rel = os.path.join(current_folder, new_name).replace("\\", "/")
+                    flash(f"Папка «{old_name}» переименована в «{new_name}».", "success")
+                else:
+                    flash("Ошибка: папка с таким именем уже существует или исходная папка не найдена.", "error")
+
 
         return redirect(url_for("projects.projects", folder=current_folder))
 
-    # GET-запрос (отрисовка страницы)
+     # GET-запрос (отрисовка страницы)
     conflict_file = os.path.basename(request.args.get("conflict_file", ""))
     temp_id = os.path.basename(request.args.get("temp_id", ""))
     conflict_data = None
     if conflict_file and temp_id and os.path.isfile(os.path.join(TEMP_FOLDER, temp_id)):
         conflict_data = {"filename": conflict_file, "temp_id": temp_id}
 
-    view_filename = os.path.basename(request.args.get("view", ""))
+    # --- БЛОК ПРОСМОТРА ФАЙЛА ---
+    view_filename = request.args.get("view", "").replace("\\", "/").strip("/")
     viewed_file = None
     if view_filename:
-        view_path = os.path.join(target_dir, view_filename)
-        if is_safe_subpath(os.path.join(current_folder, view_filename)) and os.path.isfile(view_path):
+        # Если в пути есть папка (например, "тест/файл.txt"), ищем от корня uploads
+        if "/" in view_filename:
+            view_path = os.path.join(UPLOAD_FOLDER, view_filename)
+        else:
+            # Иначе ищем в текущей открытой папке
+            view_path = os.path.join(target_dir, view_filename)
+            
+        if os.path.isfile(view_path):
             try:
                 with open(view_path, "r", encoding="utf-8") as f:
                     file_content = f.read()
             except UnicodeDecodeError:
                 with open(view_path, "r", encoding="cp1251", errors="replace") as f:
                     file_content = f.read()
-            viewed_file = {"name": view_filename, "content": file_content}
+            # Имя файла передаем без пути (только само название), чтобы красиво отображалось в заголовке
+            viewed_file = {"name": os.path.basename(view_filename), "content": file_content}
 
     folders = []
     files = []
@@ -308,9 +367,11 @@ def projects():
                 })
 
     parent_folder = os.path.dirname(current_folder).replace("\\", "/") if current_folder else None
+    descriptions = get_descriptions()
 
     return render_template(
         "index.html", title="Проекты", folders=folders, files=files,
         current_folder=current_folder, parent_folder=parent_folder,
-        valid_statuses=VALID_STATUSES, viewed_file=viewed_file, conflict_data=conflict_data
+        valid_statuses=VALID_STATUSES, viewed_file=viewed_file, conflict_data=conflict_data,
+        descriptions=descriptions
     )
