@@ -16,7 +16,15 @@
 </head>
 <body>
     <header class="header">
-        <h1><a href="{{ url_for('home') }}"  class="name {{ 'active' if request.endpoint == 'home' else '' }}">TeamDocs AI</a></h1>
+        <h1><a href="{{ url_for('home') }}" class="name {{ 'active' if request.endpoint == 'home' else '' }}">TeamDocs AI</a></h1>
+        <div style="margin-left:auto; padding-right:20px; color:var(--header-text); display:flex; gap:12px; align-items:center;">
+            {% if current_user %}
+                <span>👤 {{ current_user }}</span>
+                <a href="{{ url_for('auth.logout') }}" style="color:var(--header-text);">Выйти</a>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}" style="color:var(--header-text);">Войти</a>
+            {% endif %}
+        </div>
     </header>
 
     <div class="main-container">
@@ -139,6 +147,12 @@
                                     </div>
                                 </div>
                             {% endfor %}
+                            {% if get_folder_permission and get_folder_permission(current_user, folder.path) == 'owner' %}
+                                <button type="button" class="btn-folder-edit" title="Доступ"
+                                        data-path="{{ folder.path | e }}"
+                                        data-name="{{ folder.name | e }}"
+                                        onclick="openAclModal(this)">👥</button>
+                                {% endif %}
                         </div>
                     {% endif %}
 
@@ -645,6 +659,21 @@
                         });
                     });
                 </script>
+            {% elif login_page %}
+                <div class="settings-container">
+                    <h2>Вход в систему</h2>
+                    <form method="POST" action="{{ url_for('auth.login') }}">
+                        <div style="margin-bottom:12px;">
+                            <label>Логин</label>
+                            <input type="text" name="username" class="input-text" style="width:100%;" required autocomplete="username">
+                        </div>
+                        <div style="margin-bottom:16px;">
+                            <label>Пароль</label>
+                            <input type="password" name="password" class="input-text" style="width:100%;" required autocomplete="current-password">
+                        </div>
+                        <button type="submit" class="btn-primary">Войти</button>
+                    </form>
+                </div>
             {% else %}
                 <div class="welcome-screen">
                     <h1>Добро пожаловать</h1>
@@ -671,7 +700,31 @@
             </form>
         </div>
     </div>
-
+  
+    <div id="aclModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:2000; align-items:center; justify-content:center;">
+        <div style="background:var(--bg-panel); padding:24px; border-radius:12px; width:100%; max-width:460px;">
+          <h3 style="margin-top:0;">Доступ к папке «<span id="aclFolderName"></span>»</h3>
+          <form id="aclForm" action="{{ url_for('projects.projects', folder=current_folder) }}" method="POST">
+            <input type="hidden" name="action" value="set_acl">
+            <input type="hidden" name="folder_path" id="aclFolderPath">
+            <label>Пользователь</label>
+            <input type="text" name="username" class="input-text" style="width:100%; box-sizing:border-box;" list="usersList" required>
+            <datalist id="usersList">
+              {% for u in all_users %}<option value="{{ u }}">{% endfor %}
+            </datalist>
+            <label>Уровень</label>
+            <select name="level" class="input-text" style="width:100%; box-sizing:border-box;">
+              <option value="viewer">Просмотр</option>
+              <option value="editor">Редактирование</option>
+            </select>
+            <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:16px;">
+              <button type="button" class="btn-cancel" onclick="closeAclModal()">Отмена</button>
+              <button type="submit" class="btn-primary">Выдать доступ</button>
+            </div>
+          </form>
+        </div>
+      </div>
+  
     <script>
         // --- ТЕМА ---
         const themeInput = document.querySelector('.theme-input');
@@ -755,6 +808,17 @@
                 console.error(error);
                 alert('Ошибка сети');
             }
+        });
+        function openAclModal(btn) {
+            document.getElementById('aclFolderPath').value = btn.dataset.path;
+            document.getElementById('aclFolderName').textContent = btn.dataset.name;
+            document.getElementById('aclModal').style.display = 'flex';
+        }
+        function closeAclModal() {
+            document.getElementById('aclModal').style.display = 'none';
+        }
+        document.getElementById('aclModal')?.addEventListener('click', function(e) {
+            if (e.target === this) closeAclModal();
         });
     </script>
 </body>
