@@ -1,6 +1,9 @@
 import os
 import sys
 import io
+from dotenv import load_dotenv
+load_dotenv()
+
 from flask import Flask, render_template
 from projects import projects_bp
 from AI_chat import ai_chat_bp

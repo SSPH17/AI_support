@@ -129,12 +129,20 @@
                                     </a>
                                     
                                     <div style="display: flex; align-items: center; gap: 4px; padding-right: 8px;">
-                                        <!-- Кнопка редактирования (открывает модальное окно) -->
+                                        <!-- Кнопка редактирования (переименование) -->
                                         <button type="button" class="btn-folder-edit" title="Переименовать папку" 
                                                 data-path="{{ folder.path | e }}" 
                                                 onclick="openRenameModal(this)">
                                             ✎
                                         </button>
+
+                                        <!-- Кнопка управления доступом (только для владельца) -->
+                                        {% if get_folder_permission and get_folder_permission(current_user, folder.path) == 'owner' %}
+                                        <button type="button" class="btn-folder-edit" title="Управление доступом"
+                                                data-path="{{ folder.path | e }}"
+                                                data-name="{{ folder.name | e }}"
+                                                onclick="openAclModal(this)">👥</button>
+                                        {% endif %}
                                         
                                         <!-- Форма удаления -->
                                         <form action="{{ url_for('projects.projects', folder=current_folder) }}" method="POST" class="inline-form delete-folder-form"
@@ -147,12 +155,6 @@
                                     </div>
                                 </div>
                             {% endfor %}
-                            {% if get_folder_permission and get_folder_permission(current_user, folder.path) == 'owner' %}
-                                <button type="button" class="btn-folder-edit" title="Доступ"
-                                        data-path="{{ folder.path | e }}"
-                                        data-name="{{ folder.name | e }}"
-                                        onclick="openAclModal(this)">👥</button>
-                                {% endif %}
                         </div>
                     {% endif %}
 
@@ -665,11 +667,11 @@
                     <form method="POST" action="{{ url_for('auth.login') }}">
                         <div style="margin-bottom:12px;">
                             <label>Логин</label>
-                            <input type="text" name="username" class="input-text" style="width:100%;" required autocomplete="username">
+                            <input type="text" name="username" class="input-text" style="width:90%;" required autocomplete="username">
                         </div>
                         <div style="margin-bottom:16px;">
                             <label>Пароль</label>
-                            <input type="password" name="password" class="input-text" style="width:100%;" required autocomplete="current-password">
+                            <input type="password" name="password" class="input-text" style="width:90%;" required autocomplete="current-password">
                         </div>
                         <button type="submit" class="btn-primary">Войти</button>
                     </form>
